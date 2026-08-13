@@ -18,8 +18,7 @@
 
   function layout() {
     const rect = canvas.parentElement.getBoundingClientRect();
-    const sidebar = document.getElementById('sidebar').offsetWidth;
-    const w = rect.width - sidebar, h = rect.height;
+    const w = rect.width - 320, h = rect.height;
     canvas.width = w * devicePixelRatio;
     canvas.height = h * devicePixelRatio;
     canvas.style.width = w + 'px';

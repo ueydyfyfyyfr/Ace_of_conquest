@@ -72,6 +72,7 @@ main { flex: 1; display: flex; min-height: 0; }
 #map { flex: 1; display: block; cursor: pointer; }
 
 #sidebar {
+  flex: 0 0 320px;
   width: 320px;
   padding: 16px;
   display: flex;
