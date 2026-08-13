@@ -90,12 +90,15 @@
     // expansión / ataque: cada facción mueve desde sus celdas más fuertes
     const order = factions.filter(f => f.alive).sort(() => Math.random() - 0.5);
     for (const f of order) {
-      const owned = [];
-      for (let c = 0; c < COLS; c++) for (let r = 0; r < ROWS; r++)
-        if (cells[c][r].owner === f.id && cells[c][r].troops > 3) owned.push([c,r]);
-      owned.sort((a,b) => cells[b[0]][b[1]].troops - cells[a[0]][a[1]].troops);
+      const frontier = [];
+      for (let c = 0; c < COLS; c++) for (let r = 0; r < ROWS; r++) {
+        const cell = cells[c][r];
+        if (cell.owner !== f.id || cell.troops <= 3) continue;
+        if (neighbors(c,r).some(([nc,nr]) => cells[nc][nr].owner !== f.id)) frontier.push([c,r]);
+      }
+      frontier.sort((a,b) => cells[b[0]][b[1]].troops - cells[a[0]][a[1]].troops);
 
-      for (const [c,r] of owned.slice(0, 6)) {
+      for (const [c,r] of frontier.slice(0, 8)) {
         const src = cells[c][r];
         const targets = neighbors(c,r).filter(([nc,nr]) => cells[nc][nr].owner !== f.id);
         if (!targets.length) continue;
