@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Ace of Conquest — Simulador de Conquista</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@600;800&family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<div id="app">
+  <header id="topbar">
+    <h1>⚔️ Ace of Conquest</h1>
+    <div id="turn-info">
+      <span id="turn-label">Turno <b id="turn-num">0</b></span>
+    </div>
+    <div id="controls">
+      <button id="btn-step" class="btn">▶ Paso</button>
+      <button id="btn-play" class="btn primary">⏵ Auto</button>
+      <button id="btn-reset" class="btn danger">↺ Reiniciar</button>
+      <label id="speed-wrap">Velocidad
+        <input type="range" id="speed" min="1" max="10" value="4">
+      </label>
+    </div>
+  </header>
+
+  <main>
+    <canvas id="map"></canvas>
+
+    <aside id="sidebar">
+      <section class="panel">
+        <h2>Imperios</h2>
+        <div id="factions"></div>
+      </section>
+      <section class="panel">
+        <h2>Crónica de batalla</h2>
+        <div id="log"></div>
+      </section>
+    </aside>
+  </main>
+
+  <div id="victory" class="hidden">
+    <div id="victory-card">
+      <h2 id="victory-title">Victoria</h2>
+      <p id="victory-text"></p>
+      <button id="btn-again" class="btn primary">Jugar de nuevo</button>
+    </div>
+  </div>
+</div>
+<script src="game.js"></script>
+</body>
+</html>
