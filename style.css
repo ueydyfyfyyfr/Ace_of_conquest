@@ -1,3 +1,4 @@
+/* Variables de diseño reutilizadas en toda la interfaz. */
 :root {
   --bg: #0d1117;
   --panel: #161b26;
@@ -6,187 +7,126 @@
   --text: #e6e9f2;
   --muted: #9aa4bf;
   --gold: #e8b84b;
+  --blue: #4f7de0;
 }
 
+/* Normalización básica para evitar diferencias de tamaño entre elementos. */
 * { box-sizing: border-box; margin: 0; padding: 0; }
-
 body {
   background: radial-gradient(1200px 700px at 50% -10%, #1a2340 0%, var(--bg) 60%);
   color: var(--text);
-  font-family: 'Inter', sans-serif;
+  font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
   height: 100vh;
   overflow: hidden;
 }
-
+/* Contenedor general de la aplicación. */
 #app { display: flex; flex-direction: column; height: 100vh; }
-
+/* Barra superior: título, reloj LEF y controles de ejecución. */
 #topbar {
-  display: flex;
-  align-items: center;
-  gap: 24px;
-  padding: 12px 24px;
+  display: flex; align-items: center; gap: 20px;
+  padding: 10px 18px;
   background: linear-gradient(180deg, #131a2b, #10141f);
   border-bottom: 1px solid var(--border);
   box-shadow: 0 4px 18px rgba(0,0,0,.45);
   z-index: 5;
 }
-
 #topbar h1 {
-  font-family: 'Cinzel', serif;
-  font-size: 26px;
-  letter-spacing: 1px;
-  background: linear-gradient(180deg, #ffe9a8, var(--gold) 60%, #a77b1e);
-  -webkit-background-clip: text;
-  background-clip: text;
-  color: transparent;
-  text-shadow: 0 2px 12px rgba(232,184,75,.25);
+  font-family: Georgia, serif;
+  font-size: 24px;
+  letter-spacing: .5px;
+  color: #f0c85d;
+  white-space: nowrap;
 }
-
-#turn-info { font-size: 15px; color: var(--muted); }
-#turn-num { color: var(--gold); font-size: 18px; }
-
-#controls { display: flex; align-items: center; gap: 10px; margin-left: auto; }
-
+#turn-info { display: flex; gap: 7px; align-items: center; font-size: 13px; color: var(--muted); }
+#turn-info b { color: var(--gold); font-size: 15px; }
+.separator { opacity: .45; }
+#controls { display: flex; align-items: center; gap: 8px; margin-left: auto; }
+/* Botones reutilizados por los controles de la simulación. */
 .btn {
-  background: var(--panel-2);
-  color: var(--text);
-  border: 1px solid var(--border);
-  border-radius: 8px;
-  padding: 8px 16px;
-  font-family: inherit;
-  font-weight: 600;
-  font-size: 14px;
-  cursor: pointer;
-  transition: all .15s ease;
+  background: var(--panel-2); color: var(--text); border: 1px solid var(--border);
+  border-radius: 8px; padding: 7px 12px; font: inherit; font-size: 13px; font-weight: 650;
+  cursor: pointer; transition: all .15s ease;
 }
 .btn:hover { border-color: var(--gold); transform: translateY(-1px); }
 .btn.primary { background: linear-gradient(180deg, #3b5bd9, #2a41a8); border-color: #4a67e0; }
-.btn.primary:hover { filter: brightness(1.15); }
-.btn.danger { background: linear-gradient(180deg, #b03434, #7e2222); border-color: #c74545; }
-
-#speed-wrap { display: flex; align-items: center; gap: 8px; font-size: 13px; color: var(--muted); }
-#speed { accent-color: var(--gold); }
-
+.btn.danger { background: linear-gradient(180deg, #a53535, #742020); border-color: #bd4545; }
+.btn.full { width: 100%; margin-top: 8px; }
+.btn.small { padding: 4px 8px; font-size: 11px; }
+#speed-wrap { display: flex; align-items: center; gap: 6px; font-size: 12px; color: var(--muted); }
+#speed { accent-color: var(--gold); width: 90px; }
+/* Zona principal: canvas del mapa + panel lateral. */
 main { flex: 1; display: flex; min-height: 0; }
-
 #map { flex: 1; display: block; cursor: pointer; }
-
+/* Panel lateral con estado de imperios, entradas y registro de eventos. */
 #sidebar {
-  flex: 0 0 320px;
-  width: 320px;
-  padding: 16px;
-  display: flex;
-  flex-direction: column;
-  gap: 16px;
-  overflow-y: auto;
-  background: rgba(13,17,23,.6);
-  border-left: 1px solid var(--border);
-  backdrop-filter: blur(6px);
+  flex: 0 0 390px; width: 390px; padding: 12px;
+  display: flex; flex-direction: column; gap: 10px; overflow-y: auto;
+  background: rgba(13,17,23,.72); border-left: 1px solid var(--border); backdrop-filter: blur(6px);
 }
-
+/* Tarjetas internas del panel lateral. */
 .panel {
-  background: var(--panel);
-  border: 1px solid var(--border);
-  border-radius: 12px;
-  padding: 14px;
-  box-shadow: 0 6px 20px rgba(0,0,0,.35);
+  background: var(--panel); border: 1px solid var(--border); border-radius: 10px; padding: 11px;
+  box-shadow: 0 4px 14px rgba(0,0,0,.28);
 }
-
-.panel h2 {
-  font-family: 'Cinzel', serif;
-  font-size: 15px;
-  color: var(--gold);
-  margin-bottom: 10px;
-  letter-spacing: .5px;
-}
-
+.panel.compact { padding: 9px 11px; }
+.panel h2 { font-family: Georgia, serif; font-size: 14px; color: var(--gold); margin-bottom: 8px; }
+.panel-title-row { display: flex; align-items: center; justify-content: space-between; }
+.panel-title-row h2 { margin-bottom: 0; }
+.mini-row { display: flex; gap: 8px; font-size: 12px; color: var(--muted); }
+.mini-row b { color: var(--text); overflow-wrap: anywhere; }
+/* Resumen visual de cada nación. */
 .faction {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  padding: 8px 10px;
-  border-radius: 8px;
-  margin-bottom: 8px;
-  background: var(--panel-2);
-  border: 1px solid transparent;
-  transition: border-color .2s;
+  display: flex; align-items: flex-start; gap: 9px; padding: 7px 8px; border-radius: 8px;
+  margin-bottom: 7px; background: var(--panel-2); border: 1px solid transparent;
 }
-.faction.dead { opacity: .35; filter: grayscale(1); }
-
-.faction .dot {
-  width: 14px; height: 14px;
-  border-radius: 50%;
-  box-shadow: 0 0 8px currentColor;
-  flex-shrink: 0;
-}
-
+.faction.dead { opacity: .38; filter: grayscale(1); }
+.faction .dot { width: 13px; height: 13px; border-radius: 50%; box-shadow: 0 0 8px currentColor; flex-shrink: 0; margin-top: 3px; }
 .faction .info { flex: 1; min-width: 0; }
-.faction .name { font-weight: 700; font-size: 14px; }
-.faction .stats { font-size: 12px; color: var(--muted); }
-
-.faction .barwrap {
-  height: 6px;
-  background: #0b0f18;
-  border-radius: 4px;
-  overflow: hidden;
-  margin-top: 4px;
+.faction .name { font-weight: 750; font-size: 13px; }
+.faction .stats { font-size: 11px; line-height: 1.45; color: var(--muted); }
+.faction .stats b { color: #dce2f3; }
+.faction .barwrap { height: 5px; background: #0b0f18; border-radius: 4px; overflow: hidden; margin-top: 4px; }
+.faction .bar { height: 100%; border-radius: 4px; transition: width .35s ease; }
+/* Campos de entrada manual: impuestos, reclutas y semilla. */
+.field { display: flex; flex-direction: column; gap: 4px; font-size: 11px; color: var(--muted); margin-bottom: 6px; }
+.field input, .field select {
+  width: 100%; background: #0f1420; color: var(--text); border: 1px solid var(--border); border-radius: 6px;
+  padding: 6px 7px; font: inherit; font-size: 12px;
 }
-.faction .bar { height: 100%; border-radius: 4px; transition: width .4s ease; }
-
-#log {
-  max-height: 300px;
-  overflow-y: auto;
-  font-size: 12.5px;
-  display: flex;
-  flex-direction: column;
-  gap: 5px;
-}
-#log .entry {
-  padding: 6px 9px;
-  border-radius: 6px;
-  background: var(--panel-2);
-  border-left: 3px solid var(--border);
-  color: var(--muted);
-  animation: slideIn .3s ease;
-}
+.inline-fields { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.help { color: var(--muted); font-size: 10.5px; line-height: 1.35; margin-top: 7px; }
+.cell-info { font-size: 11.5px; line-height: 1.5; color: var(--muted); }
+.cell-info b { color: var(--text); }
+.muted { color: var(--muted); }
+/* Registro visual de los eventos procesados por el motor. */
+#log { max-height: 250px; overflow-y: auto; font-size: 11px; display: flex; flex-direction: column; gap: 4px; margin-top: 8px; }
+#log .entry { padding: 5px 7px; border-radius: 5px; background: var(--panel-2); border-left: 3px solid var(--border); color: var(--muted); }
 #log .entry.battle { border-left-color: #e05555; color: #f0c9c9; }
-#log .entry.conquest { border-left-color: var(--gold); color: #f2e3bb; }
-
-@keyframes slideIn {
-  from { opacity: 0; transform: translateX(12px); }
-  to { opacity: 1; transform: translateX(0); }
-}
-
+#log .entry.conquest, #log .entry.victory { border-left-color: var(--gold); color: #f2e3bb; }
+#log .entry.economy { border-left-color: #49b884; color: #c4ead8; }
+#log .entry.warning, #log .entry.rebellion { border-left-color: #d88a47; color: #f0d0af; }
+#log .entry.error { border-left-color: #ff5f5f; color: #ffd0d0; }
+#log .entry.ai, #log .entry.move, #log .entry.recruit { border-left-color: #6f8de8; color: #cbd6f5; }
+#log .entry.phase, #log .entry.system { border-left-color: #7f879b; }
+.parameter-grid { display: grid; grid-template-columns: 1fr auto; gap: 4px 12px; font-size: 10.5px; color: var(--muted); }
+.parameter-grid b { color: var(--text); }
+/* Capa modal que se muestra al finalizar la partida. */
 #victory {
-  position: fixed;
-  inset: 0;
-  background: rgba(5,8,14,.8);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  z-index: 50;
-  backdrop-filter: blur(4px);
+  position: fixed; inset: 0; background: rgba(5,8,14,.82); display: flex; align-items: center; justify-content: center;
+  z-index: 50; backdrop-filter: blur(4px);
 }
 #victory.hidden { display: none; }
-
 #victory-card {
-  background: linear-gradient(180deg, #1d2438, #131a2b);
-  border: 1px solid var(--gold);
-  border-radius: 16px;
-  padding: 40px 56px;
-  text-align: center;
-  box-shadow: 0 0 60px rgba(232,184,75,.25);
-  animation: pop .4s ease;
+  background: linear-gradient(180deg, #1d2438, #131a2b); border: 1px solid var(--gold); border-radius: 16px;
+  padding: 36px 48px; text-align: center; box-shadow: 0 0 60px rgba(232,184,75,.25);
 }
-#victory-card h2 {
-  font-family: 'Cinzel', serif;
-  font-size: 34px;
-  color: var(--gold);
-  margin-bottom: 12px;
+#victory-card h2 { font-family: Georgia, serif; font-size: 30px; color: var(--gold); margin-bottom: 10px; }
+#victory-card p { color: var(--muted); margin-bottom: 20px; }
+/* Ajustes mínimos para pantallas más estrechas. */
+@media (max-width: 1050px) {
+  #topbar { flex-wrap: wrap; }
+  #controls { width: 100%; margin-left: 0; }
+  #sidebar { flex-basis: 340px; width: 340px; }
 }
-#victory-card p { color: var(--muted); margin-bottom: 24px; font-size: 16px; }
 
-@keyframes pop {
-  from { transform: scale(.85); opacity: 0; }
-  to { transform: scale(1); opacity: 1; }
-}
+.seed-field { margin-top: 7px; margin-bottom: 0; }

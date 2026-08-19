@@ -1,22 +1,27 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Ace of Conquest — Simulador de Conquista</title>
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@600;800&family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="style.css">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Age of Conquest — Simulador académico</title>
+  <link rel="stylesheet" href="style.css">
 </head>
 <body>
+<!-- Contenedor general de la aplicación. La lógica está en engine.js y ui.js. -->
 <div id="app">
+  <!-- Barra superior: reloj de simulación y controles de ejecución. -->
   <header id="topbar">
-    <h1>⚔️ Ace of Conquest</h1>
+    <h1>⚔ Age of Conquest</h1>
     <div id="turn-info">
-      <span id="turn-label">Turno <b id="turn-num">0</b></span>
+      <span>Turnos ejecutados <b id="turn-num">0</b></span>
+      <span class="separator">·</span>
+      <span>Reloj LEF <b id="clock-num">0</b></span>
+      <span class="separator">·</span>
+      <span>Eventos pendientes <b id="lef-count">0</b></span>
     </div>
     <div id="controls">
-      <button id="btn-step" class="btn">▶ Paso</button>
+      <button id="btn-step" class="btn">▶ 1 turno</button>
+      <button id="btn-five" class="btn">⏩ 5 turnos</button>
       <button id="btn-play" class="btn primary">⏵ Auto</button>
       <button id="btn-reset" class="btn danger">↺ Reiniciar</button>
       <label id="speed-wrap">Velocidad
@@ -26,28 +31,86 @@
   </header>
 
   <main>
+    <!-- El canvas representa el mapa hexagonal. ui.js se encarga de dibujarlo. -->
     <canvas id="map"></canvas>
 
+    <!-- Panel lateral: estado, entradas manuales, detalle de provincias y registro. -->
     <aside id="sidebar">
+      <!-- Información del reloj discreto y semilla reproducible. -->
+      <section class="panel compact">
+        <h2>Estado de la LEF</h2>
+        <div class="mini-row"><span>Último evento:</span><b id="last-event">—</b></div>
+        <label class="field seed-field">Semilla de la corrida
+          <input id="seed-input" type="number" min="1" step="1" value="12345">
+        </label>
+      </section>
+
+      <!-- Resumen calculado de cada nación. -->
       <section class="panel">
         <h2>Imperios</h2>
         <div id="factions"></div>
       </section>
+
+      <!-- Variables que el usuario puede modificar para el próximo turno. -->
       <section class="panel">
-        <h2>Crónica de batalla</h2>
+        <h2>Entrada manual</h2>
+        <label class="field">Nación
+          <select id="faction-select"></select>
+        </label>
+        <div class="inline-fields">
+          <label class="field">Impuestos (%)
+            <input id="tax-input" type="number" min="0" max="100" step="1" value="20">
+          </label>
+          <label class="field">Reclutas
+            <input id="recruit-input" type="number" min="0" max="50" step="1" value="0">
+          </label>
+        </div>
+        <button id="btn-apply" class="btn full">Aplicar para el próximo turno</button>
+        <p class="help">El costo de reclutamiento se descuenta una sola vez durante el evento Reclutamiento.</p>
+      </section>
+
+      <section class="panel">
+        <h2>Provincia seleccionada</h2>
+        <div id="cell-info" class="cell-info"></div>
+      </section>
+
+      <!-- Eventos procesados por la LEF; sirve también para la demostración en vivo. -->
+      <section class="panel log-panel">
+        <div class="panel-title-row">
+          <h2>Registro de eventos</h2>
+          <button id="btn-tests" class="btn small">Pruebas</button>
+        </div>
         <div id="log"></div>
+      </section>
+
+      <section class="panel compact">
+        <h2>Parámetros adoptados</h2>
+        <div class="parameter-grid">
+          <span>r</span><b>0.03</b>
+          <span>Mantenimiento</span><b>2 oro/soldado</b>
+          <span>Reclutamiento</span><b>10 oro/soldado</b>
+          <span>α / β</span><b>0.10 / 0.08</b>
+          <span>Rebelión</span><b>20</b>
+          <span>Retirada</span><b>25</b>
+          <span>Rondas máx.</span><b>5</b>
+          <span>Victoria</span><b>60%</b>
+        </div>
       </section>
     </aside>
   </main>
 
+  <!-- Ventana modal mostrada cuando el motor determina una condición de victoria. -->
   <div id="victory" class="hidden">
     <div id="victory-card">
       <h2 id="victory-title">Victoria</h2>
       <p id="victory-text"></p>
-      <button id="btn-again" class="btn primary">Jugar de nuevo</button>
+      <button id="btn-again" class="btn primary">Reiniciar simulación</button>
     </div>
   </div>
 </div>
-<script src="game.js"></script>
+
+<!-- engine.js debe cargarse primero porque ui.js utiliza el objeto global AgeEngine. -->
+<script src="engine.js"></script>
+<script src="ui.js"></script>
 </body>
 </html>
