@@ -1,0 +1,26 @@
+# Dependencias (el proyecto no las usa, pero se ignoran si alguien ejecuta npm por error)
+node_modules/
+
+# Archivos comprimidos y entregables generados
+*.zip
+*.rar
+*.7z
+*.docx
+*.pdf
+
+# Resultados temporales de pruebas
+*_results.txt
+test_results.txt
+
+# Archivos del sistema operativo
+.DS_Store
+Thumbs.db
+Desktop.ini
+
+# Configuración local de editores/IDE
+.vscode/
+.idea/
+
+# Archivos temporales
+*.tmp
+*.log
