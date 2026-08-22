@@ -543,119 +543,275 @@
 
     // Calcula la relación entre fuerza enemiga y fuerza propia en fronteras en guerra.
     borderThreat(factionId) {
-      let enemy = 0;
-      let own = 0;
-      for (const cell of this.ownedCells(factionId)) {
-        let frontier = false;
-        for (const [c, r] of this.neighbors(cell.c, cell.r)) {
-          const other = this.cells[c][r];
-          if (other.owner >= 0 && other.owner !== factionId &&
-              this.relations[factionId][other.owner] === 'Guerra') {
-            frontier = true;
-            enemy += other.troops;
-          }
+  let enemy = 0;
+  let own = 0;
+
+  // Evita contar varias veces la misma provincia enemiga.
+  const enemyCells = new Set();
+  const ownFrontierCells = new Set();
+
+  for (const cell of this.ownedCells(factionId)) {
+    for (const [c, r] of this.neighbors(cell.c, cell.r)) {
+      const other = this.cells[c][r];
+
+      if (
+        other.owner >= 0 &&
+        other.owner !== factionId &&
+        this.relations[factionId][other.owner] === 'Guerra'
+      ) {
+        const enemyKey = `${other.c},${other.r}`;
+        const ownKey = `${cell.c},${cell.r}`;
+
+        if (!enemyCells.has(enemyKey)) {
+          enemyCells.add(enemyKey);
+          enemy += other.troops;
         }
-        if (frontier) own += Math.max(1, cell.troops);
+
+        if (!ownFrontierCells.has(ownKey)) {
+          ownFrontierCells.add(ownKey);
+          own += cell.troops;
+        }
       }
-      return enemy / Math.max(1, own);
     }
+  }
+
+  return enemy / Math.max(1, own);
+}
 
     /**
      * Árbol de decisión básico de la IA.
      * Decide entre consolidar, defender, expandirse, atacar, reclutar, aliarse o esperar.
      * Las decisiones se materializan programando nuevos eventos en la LEF.
      */
-    decideAction(factionId, turn) {
-      const faction = this.factions[factionId];
-      if (!faction || faction.status !== 'Activa') return;
+  decideAction(factionId, turn) {
+    const faction = this.factions[factionId];
 
-      const strongest = this.strongestCell(factionId);
-      if (!strongest) return;
+    if (!faction || faction.status !== 'Activa') return;
 
-      // Entrada manual: si el usuario solicitó reclutas, esta decisión tiene prioridad.
-      if (faction.requestedRecruits > 0) {
-        faction.lastAction = 'Reclutar (manual)';
-        this.scheduleEvent(turn, PRIORITY.Reclutamiento, 'Reclutamiento', factionId,
-          { c: strongest.c, r: strongest.r }, { amount: faction.requestedRecruits });
-        return;
-      }
+    const strongest = this.strongestCell(factionId);
+    if (!strongest) return;
 
-      if (faction.treasury < 0 || faction.happiness < 30) {
-        faction.lastAction = 'Consolidar';
-        faction.taxRate = clamp(faction.taxRate - 0.02, 0.05, 0.50);
-        this.log(`${faction.name}: IA decide CONSOLIDAR.`, 'ai');
-        return;
-      }
+    // 1. Reclutamiento solicitado manualmente por el usuario.
+    if (faction.requestedRecruits > 0) {
+      faction.lastAction = 'Reclutar (manual)';
 
-      const target = this.weakestFrontier(factionId);
-      if (!target) {
-        faction.lastAction = 'Esperar';
-        return;
-      }
+      this.scheduleEvent(
+        turn,
+        PRIORITY.Reclutamiento,
+        'Reclutamiento',
+        factionId,
+        { c: strongest.c, r: strongest.r },
+        { amount: faction.requestedRecruits }
+      );
 
-      const threat = this.borderThreat(factionId);
-      if (threat > 1.2 && faction.treasury >= PARAMS.recruitmentCost) {
-        faction.lastAction = 'Defender';
-        this.log(`${faction.name}: IA decide DEFENDER reforzando la frontera.`, 'ai');
-        this.scheduleEvent(turn, PRIORITY.Reclutamiento, 'Reclutamiento', factionId,
-          { c: target.source.c, r: target.source.r }, { amount: 4 });
-        return;
-      }
-
-      // Si la frontera quedó con una sola tropa, la IA refuerza esa provincia
-      // antes de intentar expandirse o atacar. Esto evita que la simulación
-      // quede estancada con mucho tesoro pero sin tropas móviles.
-      if (target.source.troops <= 1 && faction.treasury >= PARAMS.recruitmentCost) {
-        faction.lastAction = 'Reforzar frontera';
-        this.scheduleEvent(turn, PRIORITY.Reclutamiento, 'Reclutamiento', factionId,
-          { c: target.source.c, r: target.source.r }, { amount: 5 });
-        this.log(`${faction.name}: IA decide REFORZAR una provincia fronteriza.`, 'ai');
-        return;
-      }
-
-      const forceOwn = Math.max(1, target.source.troops * (target.source.morale / 100));
-      const forceEnemy = target.destination.owner < 0
-        ? 1
-        : Math.max(1, target.destination.troops * (target.destination.morale / 100) * (1 + target.destination.defense / 10));
-      const ratio = forceOwn / forceEnemy;
-
-      // Expandirse a una provincia Libre no requiere declarar guerra ni superar
-      // una razón de fuerza. Basta con disponer de tropas para ocuparla.
-      if (target.destination.owner < 0 && target.source.troops > 1) {
-        faction.lastAction = 'Expandir';
-        this.scheduleEvent(turn, PRIORITY.MovimientoEjercito, 'MovimientoEjercito',
-          { c: target.source.c, r: target.source.r },
-          { c: target.destination.c, r: target.destination.r },
-          { factionId });
-        this.log(`${faction.name}: IA decide EXPANDIRSE hacia una provincia Libre.`, 'ai');
-        return;
-      }
-
-      if (ratio > 1.5 && faction.happiness > 60 && target.source.troops > 3) {
-        faction.lastAction = 'Atacar';
-        const owner = target.destination.owner;
-        if (owner >= 0 && this.relations[factionId][owner] !== 'Guerra') {
-          this.scheduleEvent(turn, PRIORITY.DeclararGuerra, 'DeclararGuerra', factionId, owner);
-        }
-        this.scheduleEvent(turn, PRIORITY.MovimientoEjercito, 'MovimientoEjercito',
-          { c: target.source.c, r: target.source.r },
-          { c: target.destination.c, r: target.destination.r },
-          { factionId });
-        this.log(`${faction.name}: IA decide ATACAR.`, 'ai');
-        return;
-      }
-
-      if (faction.treasury > 2 * this.estimatedWarCost(factionId, target.destination)) {
-        faction.lastAction = 'Reclutar';
-        this.scheduleEvent(turn, PRIORITY.Reclutamiento, 'Reclutamiento', factionId,
-          { c: target.source.c, r: target.source.r }, { amount: 5 });
-        this.log(`${faction.name}: IA decide RECLUTAR en la frontera.`, 'ai');
-        return;
-      }
-
-      faction.lastAction = 'Esperar';
-      this.log(`${faction.name}: IA decide ESPERAR.`, 'ai');
+      return;
     }
+
+    // 2. Si existe una crisis económica o social, la nación se consolida.
+    if (faction.treasury < 0 || faction.happiness < 30) {
+      faction.lastAction = 'Consolidar';
+
+      faction.taxRate = clamp(
+        faction.taxRate - 0.02,
+        0.05,
+        0.50
+      );
+
+      this.log(
+        `${faction.name}: IA decide CONSOLIDAR.`,
+        'ai'
+      );
+
+      return;
+    }
+
+    // 3. Buscar una provincia vecina para expansión o ataque.
+    const target = this.weakestFrontier(factionId);
+
+    if (!target) {
+      faction.lastAction = 'Esperar';
+      return;
+    }
+
+    // 4. Las provincias libres tienen prioridad.
+    if (target.destination.owner < 0) {
+
+      // Si la frontera tiene muy pocas tropas, primero se refuerza.
+      if (
+        target.source.troops <= 1 &&
+        faction.treasury >= PARAMS.recruitmentCost
+      ) {
+        faction.lastAction = 'Reforzar frontera';
+
+        this.scheduleEvent(
+          turn,
+          PRIORITY.Reclutamiento,
+          'Reclutamiento',
+          factionId,
+          { c: target.source.c, r: target.source.r },
+          { amount: 5 }
+        );
+
+        this.log(
+          `${faction.name}: IA decide REFORZAR una provincia fronteriza.`,
+          'ai'
+        );
+
+        return;
+      }
+
+      // Si tiene tropas disponibles, ocupa la provincia libre.
+      if (target.source.troops > 1) {
+        faction.lastAction = 'Expandir';
+
+        this.scheduleEvent(
+          turn,
+          PRIORITY.MovimientoEjercito,
+          'MovimientoEjercito',
+          { c: target.source.c, r: target.source.r },
+          { c: target.destination.c, r: target.destination.r },
+          { factionId }
+        );
+
+        this.log(
+          `${faction.name}: IA decide EXPANDIRSE hacia una provincia Libre.`,
+          'ai'
+        );
+
+        return;
+      }
+    }
+
+    // 5. Calcular la relación de fuerzas si el territorio pertenece a otra nación.
+    const forceOwn = Math.max(
+      1,
+      target.source.troops *
+        (target.source.morale / 100)
+    );
+
+    const forceEnemy = Math.max(
+      1,
+      target.destination.troops *
+        (target.destination.morale / 100) *
+        (1 + target.destination.defense / 10)
+    );
+
+    const ratio = forceOwn / forceEnemy;
+    const threat = this.borderThreat(factionId);
+
+    /*
+    * 6. ATACAR.
+    *
+    * Antes se exigía ratio > 1.5.
+    * Era demasiado restrictivo porque ambos imperios
+    * podían reclutar indefinidamente sin atacarse.
+    *
+    * Como la defensa territorial ya está incluida en
+    * forceEnemy, 1.15 sigue exigiendo cierta ventaja.
+    */
+    if (
+      ratio >= 1.15 &&
+      faction.happiness > 50 &&
+      target.source.troops > 3
+    ) {
+      faction.lastAction = 'Atacar';
+
+      const enemyId = target.destination.owner;
+
+      // Primero declarar la guerra si todavía están en paz.
+      if (
+        enemyId >= 0 &&
+        this.relations[factionId][enemyId] !== 'Guerra'
+      ) {
+        this.scheduleEvent(
+          turn,
+          PRIORITY.DeclararGuerra,
+          'DeclararGuerra',
+          factionId,
+          enemyId
+        );
+      }
+
+      // Después programar el movimiento que producirá el combate.
+      this.scheduleEvent(
+        turn,
+        PRIORITY.MovimientoEjercito,
+        'MovimientoEjercito',
+        { c: target.source.c, r: target.source.r },
+        { c: target.destination.c, r: target.destination.r },
+        { factionId }
+      );
+
+      this.log(
+        `${faction.name}: IA decide ATACAR (ratio ${ratio.toFixed(2)}).`,
+        'ai'
+      );
+
+      return;
+    }
+
+    /*
+    * 7. DEFENDER.
+    *
+    * Solo defender cuando realmente existe una desventaja
+    * importante. Ya no basta con amenaza > 1.2.
+    */
+    if (
+      threat > 1.35 &&
+      ratio < 0.90 &&
+      faction.treasury >= PARAMS.recruitmentCost
+    ) {
+      faction.lastAction = 'Defender';
+
+      this.scheduleEvent(
+        turn,
+        PRIORITY.Reclutamiento,
+        'Reclutamiento',
+        factionId,
+        { c: target.source.c, r: target.source.r },
+        { amount: 4 }
+      );
+
+      this.log(
+        `${faction.name}: IA decide DEFENDER.`,
+        'ai'
+      );
+
+      return;
+    }
+
+    // 8. Si todavía no puede atacar pero tiene dinero, refuerza la frontera.
+    if (
+      faction.treasury >
+      2 * this.estimatedWarCost(factionId, target.destination)
+    ) {
+      faction.lastAction = 'Reclutar';
+
+      this.scheduleEvent(
+        turn,
+        PRIORITY.Reclutamiento,
+        'Reclutamiento',
+        factionId,
+        { c: target.source.c, r: target.source.r },
+        { amount: 5 }
+      );
+
+      this.log(
+        `${faction.name}: IA decide RECLUTAR en la frontera.`,
+        'ai'
+      );
+
+      return;
+    }
+
+    // 9. Si no puede realizar ninguna otra acción, espera.
+    faction.lastAction = 'Esperar';
+
+    this.log(
+      `${faction.name}: IA decide ESPERAR.`,
+      'ai'
+    );
+  }
 
     // Declara guerra de forma simétrica entre dos naciones y rompe una alianza previa si existe.
     declareWar(n, m) {
